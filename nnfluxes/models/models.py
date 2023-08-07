@@ -9,14 +9,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import random as orandom
 
-import doubleml as dml
-from sklearn.metrics import r2_score, mean_squared_error
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, StackingRegressor
-from sklearn.neural_network import MLPRegressor
-from sklearn.svm import SVR, LinearSVR
-from sklearn.linear_model import SGDRegressor
-from xgboost import XGBRegressor
-
 import jax
 from jax import grad, vmap, random, jit
 from jax import numpy as jnp
