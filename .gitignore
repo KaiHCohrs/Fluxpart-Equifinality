@@ -132,3 +132,8 @@ dmypy.json
 data/*
 !data/.gitkeep
 !data/description.txt
+
+# Data folder content but not the folder itself
+results/*
+!results/.gitkeep
+!results/description.txt
