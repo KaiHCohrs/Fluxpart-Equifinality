@@ -19,9 +19,6 @@ from jax.lax import cond
 from tqdm import trange
 import optax
 
-import torch.nn as nn
-import torch
-import torch.nn.functional as torchf
 import numpy as np
 import sys
 
