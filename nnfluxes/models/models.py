@@ -1152,7 +1152,7 @@ class Nightconstrained_Q10:
         inputs1 = normalize(x1, self.mu_X1, self.sigma_X1)
         inputs2 = normalize(x2, self.mu_X2, self.sigma_X2)
         inputs3 = x3
-        inputs4 = x4
+        inputs4 = x4 #normalize(x4, self.mu_X4, self.sigma_X4)
         
         # For that reason we also vectorize over the ensemble axis for all
         samples, samples_GPP, samples_RECO, _ = vmap(self.net_forward_test, (0, 0, 0, 0, 0, 0, 0))(self.params1_best, self.params2_best, self.Q10_best, inputs1, inputs2, inputs3, inputs4)
