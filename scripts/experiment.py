@@ -29,12 +29,12 @@ from sklearn.metrics import r2_score, mean_squared_error
 def main(parser: ArgumentParser = None, **kwargs):
     if parser is None:
         parser = ArgumentParser()
-    parser.add_argument("-model", type=str, default="BaseModel", help="Hybrid Model")
+    parser.add_argument("-model", type=str, default="Nightconstrained_Q10", help="Hybrid Model")
     parser.add_argument("-hidden_layer", type=int, default=2, help="batch size")
     parser.add_argument("-hidden_nodes", type=int, default=32, help="batch size")
-    parser.add_argument("-nIter", type=int, default=20000, help="training steps")
+    parser.add_argument("-nIter", type=int, default=2000, help="training steps")
     parser.add_argument("-drop_p", type=float, default=0, help="Dropout probability")
-    parser.add_argument("-weight_decay", type=float, default=5, help="Weight decay")
+    parser.add_argument("-weight_decay", type=float, default=0, help="Weight decay")
     #parser.add_argument("-save_curves", type=bool, default=False, help="Should the full curves be saved?")
     parser.add_argument('-TA', action='store_true')
     parser.add_argument('-no-TA', dest='TA', action='store_false')
@@ -47,8 +47,8 @@ def main(parser: ArgumentParser = None, **kwargs):
     for k, v in kwargs.items():
         setattr(args, k, v)
 
-    args.TA = int(args.TA)
-    args.SW = int(args.SW)
+    args.TA = 0#int(args.TA)
+    args.SW = 1#int(args.SW)
 
     ################ Define the experiment  ################
     # Model
@@ -58,11 +58,13 @@ def main(parser: ArgumentParser = None, **kwargs):
                     'p': args.drop_p*0.1,
                     'ensemble_size': 100,
                     'weight_decay': args.weight_decay*0.1,
+                    'Q10_mean_guess': 1.2,
     }
     
+    # PA, TA, SW_IN_POT, RH, P, WS, LE, VPD, SWC_1, SWC_2, SW_DIF, TS_1, TS_2, SW_POT_sm_diff, SW_POT_sm, SW_ratio, doy_sin, doy_cos, tod_sin, tod_cos, CWD
     data_config = {'hybrid_model':model_config['hybrid_model'],
-                    'nn_1': ['VPD', 'doy_cos', 'doy_sin'] + args.SW*['SW_IN'], #'PA', 'RH', 'WS', 'P', 'tod_sin', 'tod_cos' #'SW_IN_POT', 'TA', 'WS', 'SWC_1', 
-                    'nn_2': ['VPD', 'doy_cos', 'doy_sin'] + args.TA*['TA'], #'PA', 'RH', 'WS', 'P', 'tod_sin', 'tod_cos' #'SWC_1', 'TS_1',
+                    'nn_1': ['VPD', 'SW_POT_sm_diff', 'SW_POT_sm', 'PA', 'P', 'WS', 'SW_IN_POT', 'TA'] + args.SW*['SW_IN'], #'PA', 'RH', 'WS', 'P', 'tod_sin', 'tod_cos' #'SW_IN_POT', 'TA', 'WS', 'SWC_1', 
+                    'nn_2': ['VPD', 'SW_POT_sm_diff', 'SW_POT_sm', 'PA', 'P', 'WS', 'SWC_1'] + args.TA*['TS_1'], #'PA', 'RH', 'WS', 'P', 'tod_sin', 'tod_cos' #'SWC_1', 'TS_1',
                     'split': 'random',
                     'site': args.site,
                     'year': args.year,
@@ -77,7 +79,7 @@ def main(parser: ArgumentParser = None, **kwargs):
     experiment_dict = {'model_config': model_config, 'data_config': data_config, 'trainer_config': trainer_config}
 
     
-    results_path = Path(__file__).parent.parent.joinpath("results",f"{args.model}_{args.hidden_layer}x{args.hidden_nodes}_p{args.drop_p}_wd{args.weight_decay}_{args.site}_{args.year}")
+    results_path = Path(__file__).parent.parent.joinpath("results",f"{args.model}_{args.hidden_layer}x{args.hidden_nodes}_p{args.drop_p}_wd{args.weight_decay}_{args.site}_{args.year}_full")
     results_path.mkdir(parents=True, exist_ok=True)
 
     with open(results_path.joinpath('experiment_dict.yaml'), 'w') as file:
@@ -155,9 +157,6 @@ def main(parser: ArgumentParser = None, **kwargs):
             output[i]= np.concatenate([output[i], output[i].mean(axis=0)[None,:,:]], axis=0)
         
     ################ Analysis  ################
-    # Create the results_oath folder if it does not exist
-    #ToDo: Make the plot with the log curves for training, validation and test (potentially also Q10 and LR and mark best model)
-    
     results = pd.DataFrame()
     
     for i in range(model_config['ensemble_size']+1):
@@ -168,8 +167,6 @@ def main(parser: ArgumentParser = None, **kwargs):
                     for j, flux in enumerate(['NEE', 'GPP', 'RECO']):
                         row[f'{measure_str}_{flux}_{method}_{split_str}'] = measure(data[data['split'].isin(subset)][f'{flux}_{method}'], split[j][i,:])
         results = pd.concat([results, pd.DataFrame(row, index=[i])], axis=0)
-
-    #ToDo: Make the plot with the dimensions for each of the ensemble members and for the mean
     
     csv_name = "performance.csv"
     results_file = results_path.joinpath(csv_name)
