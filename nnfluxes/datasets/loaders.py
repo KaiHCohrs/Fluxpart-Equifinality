@@ -108,6 +108,10 @@ def load_dataset(config, training=True):
     else:
         driver1_label = ['SW_IN']
     driver2_label = ['TA']
+    
+    if config['hybrid_model'] == 'PriorBaseModel':
+        driver1_label = ['GPP_DT']
+        driver2_label = ['RECO_DT']
 
     driver1_train = train[driver1_label].astype('float32')  # driver for GPP
     driver2_train = train[driver2_label].astype('float32')  # driver for Reco
